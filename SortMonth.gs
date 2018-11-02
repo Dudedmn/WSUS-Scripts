@@ -1,11 +1,27 @@
-//@author Daniel Yan
-//Needs dynamic selection rather than static
-//Currently working for static version (col S-W)
-//@date 10/30/2018
-//References used:
-//https://stackoverflow.com/questions/21229180/convert-column-index-into-corresponding-column-letter
-//https://stackoverflow.com/questions/45562955/how-can-i-clear-a-column-in-google-sheets-using-google-apps-script
-//https://developers.google.com/apps-script/reference/spreadsheet/range#getvalues
+/*
+@author Daniel Yan
+Currently working for static version (col O-S)
+
+@date Created 10/30/2018
+@update 11/2/2018
+
+Static WSUS formatting which specifies an 'Orange Box' containing all relevant
+data values for WSUS data inputs for the range O2:S14
+
+Orange Box contains the following data values:
+  January Year Case
+  Monthly breakdown of the following:
+    Total Cases per month
+    Resolved Cases per month
+    Unresolved Cases per month
+ 
+ References used:
+ https://stackoverflow.com/questions/21229180/convert-column-index-into-corresponding-column-letter
+ https://stackoverflow.com/questions/45562955/how-can-i-clear-a-column-in-google-sheets-using-google-apps-script
+ https://developers.google.com/apps-script/reference/spreadsheet/range#getvalues
+ https://developers.google.com/apps-script/reference/spreadsheet/border-style
+ */
+
 
 
 
@@ -19,13 +35,7 @@
  var data = sheet.getDataRange().getValues();
  var backgroundColor = "#ff9900";
  
-//Dynamic thoughts?
-//Get position of row & column based on user input
-// cellElement = user inp
-//data[cellElement.row][cellElement.col]
-//Modify all other cells based on that cellElement input
-
-//Creates a custom menu
+//Creates a custom dropdown menu
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('SortMonths')
@@ -35,7 +45,7 @@ function onOpen() {
 }
 
 //Originator user Pierre-Marie Richard
-//Assume A1 input for column
+//Assume A1 notation input for column
 function clearColumnElement(cellElement){
  //Assumed user input is first column, row, entry
   var firstCell = sheet.getRange(cellElement);
@@ -69,7 +79,7 @@ function letterToColumn(letter)
   return column;
 }
 
-
+//Modifies the monthly total cells through incrementation
 function modifyValues(totals, resolved, unresolved, resolveValue) {
   //Adds a value to Total cases per month
   sheet.getRange(totals).setValue(sheet.getRange(totals).getValue()+1);
@@ -79,7 +89,7 @@ function modifyValues(totals, resolved, unresolved, resolveValue) {
             
 }
 
-//Assumes A1 notation for all inputs
+//Assumes A1 notation for all inputs, sets empty cell cases to 0
 function setZero(totals, resolved, unresolved) {
 if(sheet.getRange(totals).getValue() === "" ) {
   sheet.getRange(totals).setValue(0);
@@ -88,7 +98,7 @@ if(sheet.getRange(totals).getValue() === "" ) {
   }
 }
 
-//Assumes A1 notation for all inputs
+//Assumes A1 notation for input, sets background to specified color
 function setBackgroundColor(cellElement) {
 var start = parseInt(cellElement.substring(1,2),10);
 var i; var col;
@@ -103,12 +113,43 @@ for( col = 0; col < 5; col++) {
   }
 }
 
+//Assumes A1 notation for input, sets the border for the Orange Box
+//parameters for setBorder(top, left, bottom, right, vertical, horizontal, color, style);
+function setBorders(cellElement) {
+var start = parseInt(cellElement.substring(1,2),10);
+var i; var col;
+for( col = 0; col < 5; col++) {
+    for (i = start; i < (start + 13); i++) {
+      //Top cells
+      if(i == start)
+      sheet.getRange((cellElement.substring(0,1) + i).toString()).setBorder(true,null,null,null,false,false,"black",SpreadsheetApp.BorderStyle.SOLID_THICK);
+      //Bottom cells  
+      if (i == start + 12)
+      sheet.getRange((cellElement.substring(0,1) + i).toString()).setBorder(null,null,true,null,false,false,"black",SpreadsheetApp.BorderStyle.SOLID_THICK);
+      //Leftmost cells
+      if (col == 0)
+      sheet.getRange((cellElement.substring(0,1) + i).toString()).setBorder(null,true,null,null,false,false,"black",SpreadsheetApp.BorderStyle.SOLID_THICK); 
+      //Rightmost cells
+      if (col == 4)
+       sheet.getRange((cellElement.substring(0,1) + i).toString()).setBorder(null,null,null,true,false,false,"black",SpreadsheetApp.BorderStyle.SOLID_THICK); 
+      }
+    //Iterate to next columns
+    var index = letterToColumn(cellElement.substring(0,1));
+    index++;
+    cellElement = ((columnToLetter(index) + start).toString());
+  }
+}
+
 //Assumes A1 notation for all inputs
+//Sets the table formatting value for Orange Box
+//Sets the header row, year, and month names
 function setTable(yearCol, monthCol, totalCol, resolvedCol, unresolvedCol) {
   var date = sheet.getRange("B2").getValue();
   var formattedDate = Utilities.formatDate(new Date(date), "GMT", "MM-dd-yyyy'T'HH:mm:ss'Z'");
   var year = formattedDate.substring(6,10);
-   Logger.log("setYear: %s", year);
+  //  Logger.log("setYear: %s", year);
+  //parameters for setBorder(top, left, bottom, right, vertical, horizontal, color, style);
+  //Sets up borders and the table default names
   sheet.getRange(yearCol).setValue("Year").setFontWeight("bold");
   sheet.getRange((yearCol.substring(0,1) + 3).toString()).setValue(year);
   sheet.getRange(monthCol).setValue("Months").setFontWeight("bold");
@@ -168,6 +209,7 @@ function checkType(reference) {
 return typeof reference;
 }
 
+//Logging tests
 function logTest() {
   Logger.log("return test string: %s", checkType("asd"));
   Logger.log("return test int: %s", checkType(2));
@@ -179,8 +221,12 @@ function logTest() {
 }
 
 //Searches through all column cells of 'Last Status' and totals number based on month from 'Last Contact'
-//Clears any prior total value
+//Clears any prior total value based on set column value in A1 Notation
+//Creates the Orange Box
 function getMonthTotal() {
+
+/*
+  //Dynamic user prompt
   //User prompt for where total cells go
   var ui = SpreadsheetApp.getUi();
   var response = ui.prompt('Enter in the cell you wish to construct the data using A1 Notation (e.g. \'s2\')');
@@ -194,34 +240,38 @@ function getMonthTotal() {
       cellElement = attempt.getResponseText().toUpperCase();
   }
   
+  */
   
+  //Static preset for Orange Box formation
+  var cellElement = "O2", original = cellElement;
   
   //Variables for looping. 
   var i = 0, colErase = 5, num = parseInt(cellElement.substring(1,2),10);
-  Logger.log("cell element: %s",cellElement);
+  //Logger.log("cell element: %s",cellElement);
   
   //Clears next specified adjacent columns to input character
   //Dynamically made from user prompt input
   //colErase is number of columns to wipe on the right
   while(i < colErase) {
-  clearColumnElement(cellElement);
-  //Find the column char
-  var index = letterToColumn(cellElement.substring(0,1));
-  //Move to next column
-  index++;
-  //Add num back to get into A1 notation
-  cellElement = (columnToLetter(index) + num).toString();
-  //Iterate loop
-  i++;
+    clearColumnElement(cellElement);
+    //Find the column char
+    var index = letterToColumn(cellElement.substring(0,1));
+    //Move to next column
+    index++;
+    //Add num back to get into A1 notation
+    cellElement = (columnToLetter(index) + num).toString();
+    //Iterate loop
+    i++;
   }
 
+  setBorders(original);
   
-  //Temporary static setting, needs to be made dynamic ******STATIC********
-  setTable("S2","T2","U2","V2","W2");
+  //******STATIC*******
+  setTable("O2","P2","Q2","R2","S2");
   
-  //Temporary static setting, needs to be made dynamic ******STATIC********
+  //******STATIC*******
   for(i = 3; i < 15; i++) {
-  setZero(("U"+i).toString(),("V"+i).toString(),("W"+i).toString());
+    setZero(("Q"+i).toString(),("R"+i).toString(),("S"+i).toString());
   }
   
   //Dynamic background color setting 
@@ -244,55 +294,55 @@ function getMonthTotal() {
     var resolveValue = resolveRange.getValue();
     
     //Parse with base 10
-    //Temporary static setting, needs to be made dynamic ******STATIC********
+    //******STATIC*******
       switch(parseInt(month,10)) {
       //January
         case 01:
-          modifyValues("U3", "V3", "W3", resolveValue);
+          modifyValues("Q3", "R3", "S3", resolveValue);
           break;
       //February
         case 02:
-           modifyValues("U4", "V4", "W4", resolveValue);
+           modifyValues("Q4", "R4", "S4", resolveValue);
           break;
       //March
         case 03:
-          modifyValues("U5", "V5", "W5", resolveValue);
+          modifyValues("Q5", "R5", "S5", resolveValue);
           break;
       //April    
         case 04: 
-          modifyValues("U6", "V6", "W6", resolveValue);
+          modifyValues("Q6", "R6", "S6", resolveValue);
           break;
       //May    
         case 05:
-          modifyValues("U7", "V7", "W7", resolveValue);
+          modifyValues("Q7", "R7", "S7", resolveValue);
           break;
       //June    
         case 06:
-          modifyValues("U8", "V8", "W8", resolveValue);
+          modifyValues("Q8", "R8", "S8", resolveValue);
           break;          
       //July    
         case 07:
-          modifyValues("U9", "V9", "W9", resolveValue);
+          modifyValues("Q9", "R9", "S9", resolveValue);
           break;
       //August    
         case 08:
-          modifyValues("U10", "V10", "W10", resolveValue);
+          modifyValues("Q10", "R10", "S10", resolveValue);
           break;
       //September    
         case 09:
-          modifyValues("U11", "V11", "W11", resolveValue);
+          modifyValues("Q11", "R11", "S11", resolveValue);
           break;
       //October    
         case 10:
-          modifyValues("U12", "V12", "W12", resolveValue);
+          modifyValues("Q12", "R12", "S12", resolveValue);
           break;
       //November    
         case 11:
-          modifyValues("U13", "V13", "W13", resolveValue);
+          modifyValues("Q13", "R13", "S13", resolveValue);
           break;
       //December    
         case 12:
-          modifyValues("U14", "V14", "W14", resolveValue);
+          modifyValues("Q14", "R14", "S14", resolveValue);
           break;
         
         }
