@@ -5,6 +5,10 @@ Currently working for static version (col O-S)
 @date Created 10/30/2018
 @update 11/2/2018
 
+Preconditions: 
+Column containing WSUS Date Sorted by Last Contact Date
+Column containing whether a WSUS case was resolved or not
+
 Static WSUS formatting which specifies an 'Orange Box' containing all relevant
 data values for WSUS data inputs for the range O2:S14
 
@@ -14,7 +18,10 @@ Orange Box contains the following data values:
     Total Cases per month
     Resolved Cases per month
     Unresolved Cases per month
- 
+
+Postconditions:
+Orange Box containing all data has been successfully made, without eliminating prior data.
+
  References used:
  https://stackoverflow.com/questions/21229180/convert-column-index-into-corresponding-column-letter
  https://stackoverflow.com/questions/45562955/how-can-i-clear-a-column-in-google-sheets-using-google-apps-script
@@ -250,7 +257,6 @@ function getMonthTotal() {
   //Logger.log("cell element: %s",cellElement);
   
   //Clears next specified adjacent columns to input character
-  //Dynamically made from user prompt input
   //colErase is number of columns to wipe on the right
   while(i < colErase) {
     clearColumnElement(cellElement);
