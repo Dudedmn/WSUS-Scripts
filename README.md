@@ -5,5 +5,6 @@ Currently uses a static definition to automate single active sheet selections an
 
 Future additions:
 Dynamic definitions
+
 Full automation of WSUS formatting and updating.
 
