@@ -9,3 +9,6 @@ Dynamic definitions
 
 Full automation of WSUS formatting and updating.
 
+Other Scripts
+
+PowerShell - Validating entries from Symantec Ghost Suite, GLPI Inventory, DC Records
