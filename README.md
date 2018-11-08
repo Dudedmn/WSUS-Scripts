@@ -12,3 +12,6 @@ Full automation of WSUS formatting and updating.
 Other Scripts
 
 PowerShell - Validating entries from Symantec Ghost Suite, GLPI Inventory, DC Records
+
+Example of Spreadsheet:
+https://docs.google.com/spreadsheets/d/1N128ni7SrhEFjTvoPAAWvzvE7n352bH8xHMSWlZ3IvY/
