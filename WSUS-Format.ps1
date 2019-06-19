@@ -162,7 +162,7 @@ Function Query_GLPI
         $glpiPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($passBSTR)
 
 
-        $database = 'GLPI'
+        $database = 'REDACTED'
         $sqlQuery = $query
         $sqlConnectionString = "server=$glpiServer; uid=$glpiUsername; pwd=$glpiPassword; database=$database;"
         $sqlConnection = new-object MySql.Data.MySqlClient.MySqlConnection($sqlConnectionString)
@@ -203,8 +203,7 @@ Function Query_AD
 
 
     get-adComputer -ldapFilter "(name=*)" -searchBase "dc=uwb,dc=edu"-properties $properties -server $dcServer | 
-    ? { $_.CanonicalName -inotmatch 'server' } | select $properties | sort-object -property Name # | write-output
-    # select $properties will significantly speed up the query
+    ? { $_.CanonicalName -inotmatch 'server' } | select $properties | sort-object -property Name # |
     }
 }
 
@@ -217,9 +216,6 @@ Function BinarySearch
     [int]$max = $array.Count - 1
     
     $searched = $inp   
-    #if ($property -imatch 'name') { $searched = $inp.FullDomain }
-        
-    ## write-host "`n$searched : $property" -fore darkGray
 
     while ($min -le $max)
     {        
@@ -228,8 +224,6 @@ Function BinarySearch
         $inspected = $null
         $inspected = $array[$mid].$property
                 
-        ## write-host "$min :`t $mid :`t $max :`t $inspected" -fore darkGray
-
         try {
             if ($inspected -lt $searched) { $min = $mid + 1 }
             elseif ($inspected -gt $searched) { $max = $mid - 1 }
@@ -264,22 +258,13 @@ Function Process
         $leases_recent += $($_.Group | sort-object -Property LeaseExpiryTime | Select-Object -Last 1)
     }
 
-     # OGV all properties of leases
-     #$leases_recent | ogv
-
-
-    
     $targets = @($server.GetComputerTargets())
-    
-    #Check all attributes in $targets
-    #$targets | ogv
-    
+        
     if($selection.equals("1"))
     {
         #Sort currently by OptiPlex, LastReportedStatusTime, Role of workstation, and Datetime
         $item = ($targets | ? { $_.Model -imatch 'optiplex' } | ? { $_.ComputerRole -ieq 'workstation' } | 
         Sort-Object -Property LastReportedStatusTime)
-        <# | ? { $_.FullDomainName -imatch 'uwb-ml' } #>
     }
     
     elseif($selection.equals("2"))
@@ -354,7 +339,7 @@ Function Process
         $map = [ordered]@{
 
              'Name' = $name;
-             #Convert time to GMT-7 as WSUS uses GMT
+             #Convert time to GMT-7 as WSUS uses GMT or UTC 0:00
              'Last Status' = try{Get-Date $_.LastReportedStatusTime.AddHours(-7)} catch{};
              'Last Contact' = try {Get-Date $_.LastSyncTime.AddHours(-7)} catch {};
              'Contact IP' = try{$_.IPAddress} catch{};
